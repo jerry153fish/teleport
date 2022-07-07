@@ -43,7 +43,7 @@ RUN git clone --depth=1 https://github.com/PJK/libcbor.git -b v0.9.0 && \
 # Depends on libcbor, libssl-dev, zlib1g-dev and libudev.
 RUN git clone --depth=1 https://github.com/Yubico/libfido2.git -b 1.11.0 && \
     cd libfido2 && \
-    [ "$(git rev-parse HEAD)" = "e61379ff0a27277fbe0aca29ccc34ff93c57b359" ] && \    
+    [ "$(git rev-parse HEAD)" = "e61379ff0a27277fbe0aca29ccc34ff93c57b359" ] && \
     CFLAGS=-pthread cmake \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_MANPAGES=OFF \
@@ -68,11 +68,6 @@ RUN mkdir -p /opt && cd /opt && curl -L https://github.com/gravitational/libbpf/
     cd /opt/libbpf-${LIBBPF_VERSION}/src && \
     make && \
     make install
-
-## CBINDGEN ###################################################################
-
-FROM rust:${RUST_VERSION} AS cbindgen
-RUN cargo install cbindgen
 
 ## BUILDBOX ###################################################################
 
@@ -238,8 +233,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --pr
 # Switch back to root for the remaining instructions and keep it as the default
 # user.
 USER root
-
-COPY --from=cbindgen /usr/local/cargo/bin/cbindgen /usr/local/cargo/bin/cbindgen 
 
 COPY --from=libbpf /usr/include/bpf /usr/include/bpf
 COPY --from=libbpf /usr/lib64/ /usr/lib64/
