@@ -579,30 +579,46 @@ func (s *Server) HandleConnection(conn net.Conn) {
 	// httpServer will initiate the close call.
 	closerConn := utils.NewCloserConn(conn)
 
+	if err := s.handleConnection(closerConn); err != nil {
+		s.log.WithError(err).Warnf("Failed to handle client connection.")
+		if err := conn.Close(); err != nil {
+			s.log.WithError(err).Warnf("Failed to close client connection.")
+		}
+		return
+	}
+
+	// Wait for connection to close.
+	closerConn.Wait()
+}
+
+func (s *Server) handleConnection(conn net.Conn) error {
 	// Proxy sends a X.509 client certificate to pass identity information,
 	// extract it and run authorization checks on it.
-	tlsConn, id, app, err := s.authorizeConnection(closerConn)
+	tlsConn, user, app, err := s.getConnectionInfo(s.closeContext, conn)
 	if err != nil {
-		s.log.WithError(err).Error("Failed to authorize connection.")
-		return
+		return trace.Wrap(err)
 	}
 
 	// Application access supports plain TCP connections which are handled
 	// differently than HTTP requests from web apps.
 	if app.IsTCP() {
-		if err := s.tcpServer.handleConnection(s.closeContext, tlsConn, id, app); err != nil {
-			s.log.WithError(err).Error("Failed to handle TCP app connection.")
-			return
-		}
-	} else {
-		if err := s.handleHTTPApp(s.closeContext, tlsConn); err != nil {
-			s.log.WithError(err).Error("Failed to handle HTTP app connection.")
-			return
-		}
+		return s.handleTCPApp(s.closeContext, tlsConn, user, app)
 	}
 
-	// Wait for connection to close.
-	closerConn.Wait()
+	return s.handleHTTPApp(s.closeContext, tlsConn)
+}
+
+// handleTCPApp handles connection for a TCP application.
+func (s *Server) handleTCPApp(ctx context.Context, conn net.Conn, user auth.IdentityGetter, app types.Application) error {
+	id, _, err := s.authorizeContext(context.WithValue(ctx, auth.ContextUser, user))
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	err = s.tcpServer.handleConnection(s.closeContext, conn, id, app)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	return nil
 }
 
 // handleHTTPApp handles connection for an HTTP application.
@@ -681,28 +697,28 @@ func (s *Server) serveHTTP(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// authorizeConnection extracts identity information from the provided
+// getConnectionInfo extracts identity information from the provided
 // connection and runs authorization checks on it.
 //
 // The connection comes from the reverse tunnel and is expected to be TLS and
 // carry identity in the client certificate.
-func (s *Server) authorizeConnection(conn net.Conn) (*tls.Conn, *tlsca.Identity, types.Application, error) {
+func (s *Server) getConnectionInfo(ctx context.Context, conn net.Conn) (*tls.Conn, auth.IdentityGetter, types.Application, error) {
 	tlsConn := tls.Server(conn, s.tlsConfig)
 	if err := tlsConn.Handshake(); err != nil {
 		return nil, nil, nil, trace.Wrap(err, "TLS handshake failed")
 	}
 
-	ctx, err := s.authMiddleware.WrapContextWithUser(s.closeContext, tlsConn)
+	user, err := s.authMiddleware.GetUser(tlsConn.ConnectionState())
 	if err != nil {
-		return nil, nil, nil, trace.Wrap(err, "failed to extract identity from connection")
+		return nil, nil, nil, trace.Wrap(err)
 	}
 
-	id, app, err := s.authorizeContext(ctx)
+	app, err := s.getApp(ctx, user.GetIdentity().RouteToApp.PublicAddr)
 	if err != nil {
-		return nil, nil, nil, trace.Wrap(err, "failed to authorize identity")
+		return nil, nil, nil, trace.Wrap(err)
 	}
 
-	return tlsConn, id, app, nil
+	return tlsConn, user, app, nil
 }
 
 // authorizeContext will check if the context carries identity information and
