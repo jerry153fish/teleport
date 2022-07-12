@@ -25,11 +25,11 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/gravitational/teleport/lib/utils"
-
 	"github.com/gravitational/trace"
 
-	"gopkg.in/check.v1"
+	"github.com/gravitational/teleport/lib/utils"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -37,62 +37,54 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestSSHUtils(t *testing.T) { check.TestingT(t) }
+func TestStartStop(t *testing.T) {
+	_, signer, err := utils.CreateCertificate("foo", ssh.HostCert)
+	require.NoError(t, err)
 
-type ServerSuite struct {
-	signer ssh.Signer
-}
-
-var _ = check.Suite(&ServerSuite{})
-
-func (s *ServerSuite) SetUpSuite(c *check.C) {
-	var err error
-	_, s.signer, err = utils.CreateCertificate("foo", ssh.HostCert)
-	c.Assert(err, check.IsNil)
-}
-
-func (s *ServerSuite) TestStartStop(c *check.C) {
 	called := false
 	fn := NewChanHandlerFunc(func(_ context.Context, _ *ConnectionContext, nch ssh.NewChannel) {
 		called = true
 		err := nch.Reject(ssh.Prohibited, "nothing to see here")
-		c.Assert(err, check.IsNil)
+		require.NoError(t, err)
 	})
 
 	srv, err := NewServer(
 		"test",
 		utils.NetAddr{AddrNetwork: "tcp", Addr: "localhost:0"},
 		fn,
-		[]ssh.Signer{s.signer},
+		[]ssh.Signer{signer},
 		AuthMethods{Password: pass("abc123")},
 	)
-	c.Assert(err, check.IsNil)
-	c.Assert(srv.Start(), check.IsNil)
+	require.NoError(t, err)
+	require.NoError(t, srv.Start())
 
 	clientConfig := &ssh.ClientConfig{
 		Auth:            []ssh.AuthMethod{ssh.Password("abc123")},
-		HostKeyCallback: ssh.FixedHostKey(s.signer.PublicKey()),
+		HostKeyCallback: ssh.FixedHostKey(signer.PublicKey()),
 	}
 	clt, err := ssh.Dial("tcp", srv.Addr(), clientConfig)
-	c.Assert(err, check.IsNil)
+	require.NoError(t, err)
 	defer clt.Close()
 
 	// Call new session to initiate opening new channel. This should get
 	// rejected and fail.
 	_, err = clt.NewSession()
-	c.Assert(err, check.NotNil)
+	require.NotNil(t, err)
 
-	c.Assert(srv.Close(), check.IsNil)
-	wait(c, srv)
-	c.Assert(called, check.Equals, true)
+	require.NoError(t, srv.Close())
+	wait(t, srv)
+	require.Equal(t, called, true)
 }
 
 // TestShutdown tests graceul shutdown feature
-func (s *ServerSuite) TestShutdown(c *check.C) {
+func TestShutdown(t *testing.T) {
+	_, signer, err := utils.CreateCertificate("foo", ssh.HostCert)
+	require.NoError(t, err)
+
 	closeContext, cancel := context.WithCancel(context.TODO())
 	fn := NewChanHandlerFunc(func(_ context.Context, ccx *ConnectionContext, nch ssh.NewChannel) {
 		ch, _, err := nch.Accept()
-		c.Assert(err, check.IsNil)
+		require.NoError(t, err)
 		defer ch.Close()
 
 		<-closeContext.Done()
@@ -103,46 +95,49 @@ func (s *ServerSuite) TestShutdown(c *check.C) {
 		"test",
 		utils.NetAddr{AddrNetwork: "tcp", Addr: "localhost:0"},
 		fn,
-		[]ssh.Signer{s.signer},
+		[]ssh.Signer{signer},
 		AuthMethods{Password: pass("abc123")},
 		SetShutdownPollPeriod(10*time.Millisecond),
 	)
-	c.Assert(err, check.IsNil)
-	c.Assert(srv.Start(), check.IsNil)
+	require.NoError(t, err)
+	require.NoError(t, srv.Start())
 
 	clientConfig := &ssh.ClientConfig{
 		Auth:            []ssh.AuthMethod{ssh.Password("abc123")},
-		HostKeyCallback: ssh.FixedHostKey(s.signer.PublicKey()),
+		HostKeyCallback: ssh.FixedHostKey(signer.PublicKey()),
 	}
 	clt, err := ssh.Dial("tcp", srv.Addr(), clientConfig)
-	c.Assert(err, check.IsNil)
+	require.NoError(t, err)
 	defer clt.Close()
 
 	// call new session to initiate opening new channel
 	_, err = clt.NewSession()
-	c.Assert(err, check.IsNil)
+	require.NoError(t, err)
 
 	// context will timeout because there is a connection around
 	ctx, ctxc := context.WithTimeout(context.TODO(), 50*time.Millisecond)
 	defer ctxc()
-	c.Assert(trace.IsConnectionProblem(srv.Shutdown(ctx)), check.Equals, true)
+	require.Equal(t, trace.IsConnectionProblem(srv.Shutdown(ctx)), true)
 
 	// now shutdown will return
 	cancel()
 	ctx2, ctxc2 := context.WithTimeout(context.TODO(), time.Second)
 	defer ctxc2()
-	c.Assert(srv.Shutdown(ctx2), check.IsNil)
+	require.NoError(t, srv.Shutdown(ctx2))
 
 	// shutdown is re-entrable
 	ctx3, ctxc3 := context.WithTimeout(context.TODO(), time.Second)
 	defer ctxc3()
-	c.Assert(srv.Shutdown(ctx3), check.IsNil)
+	require.NoError(t, srv.Shutdown(ctx3))
 }
 
-func (s *ServerSuite) TestConfigureCiphers(c *check.C) {
+func TestConfigureCiphers(t *testing.T) {
+	_, signer, err := utils.CreateCertificate("foo", ssh.HostCert)
+	require.NoError(t, err)
+
 	fn := NewChanHandlerFunc(func(_ context.Context, _ *ConnectionContext, nch ssh.NewChannel) {
 		err := nch.Reject(ssh.Prohibited, "nothing to see here")
-		c.Assert(err, check.IsNil)
+		require.NoError(t, err)
 	})
 
 	// create a server that only speaks aes128-ctr
@@ -150,12 +145,12 @@ func (s *ServerSuite) TestConfigureCiphers(c *check.C) {
 		"test",
 		utils.NetAddr{AddrNetwork: "tcp", Addr: "localhost:0"},
 		fn,
-		[]ssh.Signer{s.signer},
+		[]ssh.Signer{signer},
 		AuthMethods{Password: pass("abc123")},
 		SetCiphers([]string{"aes128-ctr"}),
 	)
-	c.Assert(err, check.IsNil)
-	c.Assert(srv.Start(), check.IsNil)
+	require.NoError(t, err)
+	require.NoError(t, srv.Start())
 
 	// client only speaks aes256-ctr, should fail
 	cc := ssh.ClientConfig{
@@ -163,10 +158,10 @@ func (s *ServerSuite) TestConfigureCiphers(c *check.C) {
 			Ciphers: []string{"aes256-ctr"},
 		},
 		Auth:            []ssh.AuthMethod{ssh.Password("abc123")},
-		HostKeyCallback: ssh.FixedHostKey(s.signer.PublicKey()),
+		HostKeyCallback: ssh.FixedHostKey(signer.PublicKey()),
 	}
 	_, err = ssh.Dial("tcp", srv.Addr(), &cc)
-	c.Assert(err, check.NotNil, check.Commentf("cipher mismatch, should fail, got nil"))
+	require.NotNilf(t, err, "cipher mismatch, should fail, got nil")
 
 	// client only speaks aes128-ctr, should succeed
 	cc = ssh.ClientConfig{
@@ -174,22 +169,25 @@ func (s *ServerSuite) TestConfigureCiphers(c *check.C) {
 			Ciphers: []string{"aes128-ctr"},
 		},
 		Auth:            []ssh.AuthMethod{ssh.Password("abc123")},
-		HostKeyCallback: ssh.FixedHostKey(s.signer.PublicKey()),
+		HostKeyCallback: ssh.FixedHostKey(signer.PublicKey()),
 	}
 	clt, err := ssh.Dial("tcp", srv.Addr(), &cc)
-	c.Assert(err, check.IsNil, check.Commentf("cipher match, should not fail, got error: %v", err))
+	require.NoError(t, err, fmt.Sprintf("cipher match, should not fail, got error: %v", err))
 	defer clt.Close()
 }
 
 // TestHostSigner makes sure Teleport can not be started with a invalid host
 // certificate. The main check is the certificate algorithms.
-func (s *ServerSuite) TestHostSignerFIPS(c *check.C) {
+func TestHostSignerFIPS(t *testing.T) {
+	_, signer, err := utils.CreateCertificate("foo", ssh.HostCert)
+	require.NoError(t, err)
+
 	_, ellipticSigner, err := utils.CreateEllipticCertificate("foo", ssh.HostCert)
-	c.Assert(err, check.IsNil)
+	require.NoError(t, err)
 
 	newChanHandler := NewChanHandlerFunc(func(_ context.Context, _ *ConnectionContext, nch ssh.NewChannel) {
 		err := nch.Reject(ssh.Prohibited, "nothing to see here")
-		c.Assert(err, check.IsNil)
+		require.NoError(t, err)
 	})
 
 	var tests = []struct {
@@ -205,7 +203,7 @@ func (s *ServerSuite) TestHostSignerFIPS(c *check.C) {
 		},
 		// RSA when in FIPS mode is okay.
 		{
-			inSigner: s.signer,
+			inSigner: signer,
 			inFIPS:   true,
 			outError: false,
 		},
@@ -217,7 +215,7 @@ func (s *ServerSuite) TestHostSignerFIPS(c *check.C) {
 		},
 		// RSA when in not FIPS mode should succeed.
 		{
-			inSigner: s.signer,
+			inSigner: signer,
 			inFIPS:   false,
 			outError: false,
 		},
@@ -232,11 +230,11 @@ func (s *ServerSuite) TestHostSignerFIPS(c *check.C) {
 			SetCiphers([]string{"aes128-ctr"}),
 			SetFIPS(tt.inFIPS),
 		)
-		c.Assert(err != nil, check.Equals, tt.outError)
+		require.Equal(t, err != nil, tt.outError)
 	}
 }
 
-func wait(c *check.C, srv *Server) {
+func wait(t *testing.T, srv *Server) {
 	s := make(chan struct{})
 	go func() {
 		srv.Wait(context.TODO())
@@ -244,7 +242,7 @@ func wait(c *check.C, srv *Server) {
 	}()
 	select {
 	case <-time.After(time.Second):
-		c.Assert(false, check.Equals, true, check.Commentf("exceeded waiting timeout"))
+		require.Equal(t, false, true, "exceeded waiting timeout")
 	case <-s:
 	}
 }
