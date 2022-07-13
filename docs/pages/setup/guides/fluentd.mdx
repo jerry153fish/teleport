@@ -38,10 +38,29 @@ from Teleport's events API, and forwards them to Fluentd.
   ```
   </TabItem>
 
-  <TabItem label="MacOS">
+  <TabItem label="MacOS (AMD64)">
+
   ```code
   $ curl -L -O https://get.gravitational.com/teleport-event-handler-v(=teleport.plugin.version=)-darwin-amd64-bin.tar.gz
-  $ tar -zxvf teleport-event-handler-v(=teleport.plugin.version=)-linux-amd64-bin.tar.gz
+  $ tar -zxvf teleport-event-handler-v(=teleport.plugin.version=)-darwin-amd64-bin.tar.gz
+  ```
+  <Notice type="warning">
+  To run the event handler plugin on a machine with an M1 chip, you will need to
+  build the plugin from source.
+  </Notice>
+
+  </TabItem>
+  <TabItem label="From Source">
+  Ensure that you have Docker installed and running.
+
+  Run the following commands to build the plugin and move it to the root of the
+  `event-handler` directory:
+
+  ```code
+  $ git clone https://github.com/gravitational/teleport-plugins.git --depth 1
+  $ cd teleport-plugins/event-handler/build.assets
+  $ make install
+  $ cd ../../.. && mv teleport-plugins/event-handler/build/teleport-event-handler .
   ```
   </TabItem>
   <TabItem label="Docker">
@@ -224,7 +243,7 @@ and `auth.cas` (certificate, private key, and CA certs, respectively).
 $ tctl auth sign --user=teleport-event-handler --out=identity
 ```
 
-The above sequence should result in one PEM-encoded file: `terraform-identity`.
+The above sequence should result in one PEM-encoded file called `identity`.
 
 </TabItem>
 </Tabs>
