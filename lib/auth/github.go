@@ -451,7 +451,11 @@ func (a *Server) calculateGithubUser(connector types.GithubConnector, claims *ty
 	}
 
 	// Calculate logins, kubegroups, roles, and traits.
-	p.roles, p.kubeGroups, p.kubeUsers = connector.MapClaims(*claims)
+	var err error
+	p.roles, p.kubeGroups, p.kubeUsers, err = connector.MapClaims(*claims)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
 	if len(p.roles) == 0 {
 		return nil, trace.BadParameter(
 			"user %q does not belong to any teams configured in %q connector; the configuration may have typos.",
