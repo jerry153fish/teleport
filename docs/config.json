@@ -877,6 +877,20 @@
       ]
     },
     {
+      "icon": "TODO",
+      "title": "Teleport Connect",
+      "entries": [
+        {
+          "title": "Introduction",
+          "slug": "/teleport-connect/introduction/"
+        },
+        {
+          "title": "Getting Started",
+          "slug": "/teleport-connect/getting-started/"
+        }
+      ]
+    },
+    {
       "icon": "integrations",
       "title": "Architecture",
       "entries": [
