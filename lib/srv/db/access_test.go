@@ -47,6 +47,7 @@ import (
 	"github.com/gravitational/teleport/api/constants"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/auth"
+	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/client"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events/eventstest"
@@ -73,6 +74,14 @@ import (
 
 func TestMain(m *testing.M) {
 	utils.InitLoggerForTests()
+	privPem, pubPem, err := native.GenerateKeyPair()
+	if err != nil {
+		panic(err)
+	}
+	native.UnsafeSetGenerateKeyPairFunc(func() ([]byte, []byte, error) {
+		return privPem, pubPem, nil
+	})
+
 	os.Exit(m.Run())
 }
 
@@ -779,7 +788,6 @@ func TestAccessMongoDB(t *testing.T) {
 				SetCompressors([]string{"zlib"}),
 		},
 	}
-
 	// Execute each scenario on both modern and legacy Mongo servers
 	// to make sure legacy messages are also subject to RBAC.
 	for _, test := range tests {
@@ -789,7 +797,6 @@ func TestAccessMongoDB(t *testing.T) {
 					test := test
 					serverName := serverName
 					clientOpt := clientOpt
-
 					t.Parallel()
 
 					// Create user/role with the requested permissions.
