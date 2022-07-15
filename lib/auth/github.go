@@ -31,6 +31,7 @@ import (
 	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
+	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
 
@@ -450,9 +451,14 @@ func (a *Server) calculateGithubUser(connector types.GithubConnector, claims *ty
 		username:      claims.Username,
 	}
 
+	// Determine if we are enterprise licensed, Github SSO is only allowed
+	// with Teleport Enterprise.
+	version := modules.GetModules().BuildType()
+	isEnt := version == modules.BuildEnterprise
+
 	// Calculate logins, kubegroups, roles, and traits.
 	var err error
-	p.roles, p.kubeGroups, p.kubeUsers, err = connector.MapClaims(*claims)
+	p.roles, p.kubeGroups, p.kubeUsers, err = connector.MapClaims(*claims, isEnt)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}

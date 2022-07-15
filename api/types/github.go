@@ -59,7 +59,7 @@ type GithubConnector interface {
 	SetTeamsToRoles([]TeamRolesMapping)
 	// MapClaims returns the list of allows logins based on the retrieved claims
 	// returns list of logins and kubernetes groups
-	MapClaims(GithubClaims) (roles []string, kubeGroups []string, kubeUsers []string, err error)
+	MapClaims(GithubClaims, bool) (roles []string, kubeGroups []string, kubeUsers []string, err error)
 	// GetDisplay returns the connector display name
 	GetDisplay() string
 	// SetDisplay sets the connector display name
@@ -253,7 +253,7 @@ func (c *GithubConnectorV3) SetDisplay(display string) {
 
 // MapClaims returns a list of logins based on the provided claims,
 // returns a list of logins and list of kubernetes groups
-func (c *GithubConnectorV3) MapClaims(claims GithubClaims) ([]string, []string, []string, error) {
+func (c *GithubConnectorV3) MapClaims(claims GithubClaims, isEnterprise bool) ([]string, []string, []string, error) {
 	var roles, kubeGroups, kubeUsers []string
 	for _, mapping := range c.GetTeamsToLogins() {
 		teams, ok := claims.OrganizationToTeams[mapping.Organization]
@@ -264,15 +264,17 @@ func (c *GithubConnectorV3) MapClaims(claims GithubClaims) ([]string, []string, 
 		for _, team := range teams {
 			// see if the user belongs to this team
 			if team == mapping.Team {
-				usesSSO, err := c.checkOrgSSO(mapping.Organization)
-				if err != nil {
-					return nil, nil, nil, trace.Wrap(err)
-				}
-				if usesSSO {
-					return nil, nil, nil, trace.AccessDenied(
-						"Github organization %s uses SSO, please purchase a Teleport Enterprise license if you want to authenticate with this organization",
-						mapping.Organization,
-					)
+				if !isEnterprise {
+					usesSSO, err := c.checkOrgSSO(mapping.Organization)
+					if err != nil {
+						return nil, nil, nil, trace.Wrap(err)
+					}
+					if usesSSO {
+						return nil, nil, nil, trace.AccessDenied(
+							"Github organization %s uses SSO, please purchase a Teleport Enterprise license if you want to authenticate with this organization",
+							mapping.Organization,
+						)
+					}
 				}
 
 				roles = append(roles, mapping.Logins...)
@@ -290,15 +292,17 @@ func (c *GithubConnectorV3) MapClaims(claims GithubClaims) ([]string, []string, 
 		for _, team := range teams {
 			// see if the user belongs to this team
 			if team == mapping.Team {
-				usesSSO, err := c.checkOrgSSO(mapping.Organization)
-				if err != nil {
-					return nil, nil, nil, trace.Wrap(err)
-				}
-				if usesSSO {
-					return nil, nil, nil, trace.AccessDenied(
-						"Github organization %s uses SSO, please purchase a Teleport Enterprise license if you want to authenticate with this organization",
-						mapping.Organization,
-					)
+				if !isEnterprise {
+					usesSSO, err := c.checkOrgSSO(mapping.Organization)
+					if err != nil {
+						return nil, nil, nil, trace.Wrap(err)
+					}
+					if usesSSO {
+						return nil, nil, nil, trace.AccessDenied(
+							"Github organization %s uses SSO, please purchase a Teleport Enterprise license if you want to authenticate with this organization",
+							mapping.Organization,
+						)
+					}
 				}
 
 				roles = append(roles, mapping.Roles...)
@@ -308,6 +312,9 @@ func (c *GithubConnectorV3) MapClaims(claims GithubClaims) ([]string, []string, 
 	return utils.Deduplicate(roles), utils.Deduplicate(kubeGroups), utils.Deduplicate(kubeUsers), nil
 }
 
+// checkOrgSSO returns true if the Github organization is a Github
+// Enterprise Cloud organization that has SSO enabled. SSO is a
+// Teleport Enterprise feature so it should not be allowed for OSS.
 func (c *GithubConnectorV3) checkOrgSSO(org string) (bool, error) {
 	// A Github organization will have a "sso" page reachable if it
 	// supports SSO. There doesn't seem to be any way to get this
