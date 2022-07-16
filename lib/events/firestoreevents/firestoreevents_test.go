@@ -77,7 +77,7 @@ func setupFirestoreContext(t *testing.T) *firestoreContext {
 	return tt
 }
 
-func (tt *firestoreContext) Close(t *testing.T) {
+func (tt *firestoreContext) setupTest(t *testing.T) {
 	ctx := context.Background()
 
 	// Delete all documents.
@@ -92,29 +92,36 @@ func (tt *firestoreContext) Close(t *testing.T) {
 	}
 	_, err = batch.Commit(ctx)
 	require.NoError(t, err)
+}
 
+func (tt *firestoreContext) Close(t *testing.T) {
 	if tt.log != nil {
 		err := tt.log.Close()
 		require.NoError(t, err)
 	}
 }
 
-func TestSessionEventsCRUD(t *testing.T) {
-	tt := setupFirestoreContext(t)
-
+func (tt *firestoreContext) testSessionEventsCRUD(t *testing.T) {
+	tt.setupTest(t)
 	tt.suite.SessionEventsCRUD(t)
 }
 
-func TestPagination(t *testing.T) {
-	tt := setupFirestoreContext(t)
-
+func (tt *firestoreContext) testPagination(t *testing.T) {
+	tt.setupTest(t)
 	tt.suite.EventPagination(t)
 }
 
-func TestSearchSessionEvensBySessionID(t *testing.T) {
+func (tt *firestoreContext) testSearchSessionEvensBySessionID(t *testing.T) {
+	tt.setupTest(t)
+	tt.suite.SearchSessionEvensBySessionID(t)
+}
+
+func TestFirestoreEvents(t *testing.T) {
 	tt := setupFirestoreContext(t)
 
-	tt.suite.SearchSessionEvensBySessionID(t)
+	t.Run("TestSessionEventsCRUD", tt.testSessionEventsCRUD)
+	t.Run("TestPagination", tt.testPagination)
+	t.Run("TestSearchSessionEvensBySessionID", tt.testSearchSessionEvensBySessionID)
 }
 
 func emulatorRunning() bool {
