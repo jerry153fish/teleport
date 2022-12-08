@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	cloud.google.com/go/container v1.8.0
-	cloud.google.com/go/firestore v1.6.1
-	cloud.google.com/go/iam v0.7.0
+	cloud.google.com/go/firestore v1.9.0
+	cloud.google.com/go/iam v0.8.0
 	cloud.google.com/go/kms v1.6.0
 	cloud.google.com/go/storage v1.28.0
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
@@ -33,7 +33,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.75.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.6
 	github.com/aws/aws-sigv4-auth-cassandra-gocql-driver-plugin v0.0.0-20220331165046-e4d000c0d6a6
-	github.com/beevik/etree v1.1.0
+	github.com/beevik/etree v1.1.0 // indirect
 	github.com/bufbuild/connect-go v1.3.2
 	github.com/coreos/go-oidc v2.1.0+incompatible // replaced
 	github.com/coreos/go-semver v0.3.0
@@ -130,10 +130,10 @@ require (
 	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.3.0
 	golang.org/x/term v0.2.0
-	golang.org/x/text v0.4.0
+	golang.org/x/text v0.5.0
 	golang.org/x/tools v0.3.0
-	google.golang.org/api v0.103.0
-	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6
+	google.golang.org/api v0.104.0
+	google.golang.org/genproto v0.0.0-20221206210731-b1a01be3a5f6
 	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/examples v0.0.0-20221010194801-c67245195065
 	google.golang.org/protobuf v1.28.1
@@ -171,10 +171,10 @@ require (
 
 require (
 	cloud.google.com/go v0.105.0 // indirect
-	cloud.google.com/go/compute v1.12.1 // indirect
-	cloud.google.com/go/compute/metadata v0.2.1 // indirect
+	cloud.google.com/go/compute v1.13.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.2 // indirect
 	cloud.google.com/go/longrunning v0.3.0 // indirect
-	cloud.google.com/go/pubsub v1.26.0 // indirect
+	cloud.google.com/go/pubsub v1.27.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
@@ -220,7 +220,6 @@ require (
 	github.com/cncf/udpa/go v0.0.0-20210930031921-04548b0d99d4 // indirect
 	github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534 // indirect
-	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -365,7 +364,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
-	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
+	golang.org/x/time v0.1.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
