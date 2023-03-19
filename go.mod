@@ -53,7 +53,7 @@ require (
 	github.com/go-ldap/ldap/v3 v3.4.4
 	github.com/go-logr/logr v1.2.3
 	github.com/go-mysql-org/go-mysql v1.5.0 // replaced
-	github.com/go-piv/piv-go v1.10.0
+	github.com/go-piv/piv-go v1.11.0
 	github.com/go-redis/redis/v9 v9.0.0-rc.1 // replaced
 	github.com/go-webauthn/webauthn v0.5.0
 	github.com/gobuffalo/flect v1.0.0 // indirect
