@@ -7,7 +7,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.6.0
 	github.com/google/go-github/v41 v41.0.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/gravitational/trace v1.2.1
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.4
