@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/gravitational/trace v1.3.1
 	github.com/hashicorp/go-hclog v1.5.0
-	github.com/hashicorp/go-retryablehttp v0.7.4
+	github.com/hashicorp/go-retryablehttp v0.7.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	github.com/waigani/diffparser v0.0.0-20190828052634-7391f219313d
