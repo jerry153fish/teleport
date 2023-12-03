@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.3.2 // replaced
-	github.com/aws/aws-sdk-go-v2 v1.22.0
+	github.com/aws/aws-sdk-go-v2 v1.23.5
 	github.com/aws/aws-sdk-go-v2/config v1.20.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.129.0
 )
@@ -20,7 +20,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.16.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.18.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.24.0 // indirect
-	github.com/aws/smithy-go v1.16.0 // indirect
+	github.com/aws/smithy-go v1.18.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
 )
