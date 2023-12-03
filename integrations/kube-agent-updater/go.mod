@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/distribution/reference v0.5.0
-	github.com/google/go-containerregistry v0.16.1
+	github.com/google/go-containerregistry v0.17.0
 	github.com/gravitational/trace v1.3.1
 	github.com/jonboulle/clockwork v0.4.0
 	github.com/opencontainers/go-digest v1.0.0
