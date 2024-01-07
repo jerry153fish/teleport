@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/alecthomas/kingpin/v2 v2.3.2 // replaced
 	github.com/bmatcuk/doublestar/v4 v4.6.1
-	github.com/bradleyfalzon/ghinstallation/v2 v2.8.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.9.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/go-github/v41 v41.0.0
 	github.com/google/uuid v1.4.0
@@ -72,7 +72,7 @@ require (
 )
 
 require (
-	github.com/google/go-github/v56 v56.0.0 // indirect
+	github.com/google/go-github/v57 v57.0.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 )
 
