@@ -10,7 +10,7 @@ crate-type = ["staticlib"]
 [dependencies]
 bitflags = "2.4.1"
 byteorder = "1.5.0"
-env_logger = "0.10.0"
+env_logger = "0.11.0"
 iso7816 = "0.1.1"
 iso7816-tlv = "0.4.3"
 libc = "0.2.149"
